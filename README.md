@@ -92,6 +92,7 @@ Desde la carpeta del proyecto (la que contiene `package.json`):
  
 ```bash
 npm install
+npm install --save-dev @tauri-apps/cli
 ```
  
 Esto instala la CLI de Tauri (`@tauri-apps/cli`). Las dependencias de Rust se descargan solas la primera vez que compilas o ejecutas la aplicación.
