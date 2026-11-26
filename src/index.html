@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sonora</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" data-icon="music" data-size="18"></span>
+        <span class="brand-name">Sonora</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-item" data-nav="songs"><span data-icon="music"></span>Canciones</button>
+        <button class="nav-item" data-nav="albums"><span data-icon="disc"></span>Álbumes</button>
+        <button class="nav-item" data-nav="artists"><span data-icon="user"></span>Artistas</button>
+        <button class="nav-item" data-nav="queue"><span data-icon="queue"></span>Fila</button>
+      </nav>
+      <div class="side-head">
+        <span>Playlists</span>
+        <button class="icon-btn sm" data-act="new-playlist" title="Nueva playlist" data-icon="plus" data-size="16"></button>
+      </div>
+      <div class="playlist-list" id="playlist-list"></div>
+      <div class="side-foot">
+        <div class="scan-status" id="scan-status" hidden></div>
+        <button class="nav-item" data-act="open-settings"><span data-icon="folder"></span>Biblioteca</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="back" title="Atrás" data-icon="chevron-left" data-size="20"></button>
+        <label class="search">
+          <span data-icon="search" data-size="16"></span>
+          <input id="search" type="search" placeholder="Buscar canciones, álbumes o artistas" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="icon-btn" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema"></button>
+      </header>
+      <div class="scan-line" id="scan-line"></div>
+      <section class="view" id="view"></section>
+    </main>
+
+    <aside class="now-panel" id="now-panel"></aside>
+    <footer class="player" id="player"></footer>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+  <!-- crossorigin es necesario para que Web Audio pueda procesar los archivos servidos por asset.localhost -->
+  <audio id="audio" preload="metadata" crossorigin="anonymous"></audio>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
