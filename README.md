@@ -10,7 +10,7 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 - Fila de reproducción: salta a cualquier canción, quita canciones, límpiala, guárdala como playlist y reordénala arrastrando las canciones. Funciona en la página **Fila** y en el panel lateral.
 - Aleatorio: reordena de verdad la fila y la restaura al desactivarlo.
 - Playlists M3U: crea, renombra, elimina, agrega y quita canciones, e importa archivos `.m3u` y `.m3u8`. Cada playlist es un archivo real. Las páginas de álbum y artista tienen un botón **A playlist** para agregar todo su contenido.
-- Ecualizador de 5 bandas con curva interactiva, ancho (Q) de las bandas medias, presets incluidos y presets propios.
+- Ecualizador de 5 bandas con curva interactiva, ancho (Q) de las bandas medias, conversión estéreo/mono, presets incluidos y presets propios.
 - Tema claro y oscuro.
 ## Atajos de teclado
  
@@ -19,7 +19,7 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 | `Espacio` | Reproducir / pausa |
 | `←` `→` | Retroceder / avanzar 5 s |
 | `Ctrl+←` `Ctrl+→` | Anterior / siguiente canción |
-| `Ctrl+↑` `Ctrl+↓` | Subir / bajar volumen |
+| `↑` `↓` | Subir / bajar volumen |
 | `Alt+←` `Alt+→` | Atrás / adelante entre vistas |
 | `M` | Silenciar |
 | `Ctrl+F` | Buscar |
@@ -112,10 +112,10 @@ Se abre la ventana de Sonora. La primera ejecución tarda varios minutos porque 
 Este proyecto no incluye pruebas automáticas. Para verificar que todo funciona, ejecuta `npm run dev` y revisa:
  
 1. **Biblioteca:** pulsa **Biblioteca** en la barra lateral, luego **Agregar carpeta** y elige una carpeta con música. Debe aparecer el progreso del escaneo y, al terminar, las canciones, álbumes y artistas.
-2. **Reproducción:** pulsa **Reproducir** en la vista Canciones. Comprueba pausa, anterior/siguiente, barra de progreso, volumen y los atajos de teclado.
+2. **Reproducción:** pulsa **Reproducir** en la vista Canciones. Comprueba pausa, anterior/siguiente, barra de progreso, volumen (con la barra, la rueda del ratón y las flechas `↑`/`↓`) y los atajos de teclado.
 3. **Fila:** abre **Fila** en la barra lateral. Arrastra una canción a otra posición: el cursor pasa a la mano cerrada, una copia de la fila sigue al cursor y una línea marca el destino. Repite en la pestaña **Fila** del panel derecho. Pulsa `Esc` durante el arrastre para cancelarlo.
 4. **Playlists:** abre un álbum o un artista y pulsa **A playlist**. Elige una playlist existente o **Nueva playlist…** y comprueba que las canciones aparecen en ella.
-5. **Ecualizador:** pulsa el botón de ecualizador de la barra del reproductor, actívalo, aplica un preset y arrastra los puntos de la curva mientras suena una canción. El cambio debe oírse.
+5. **Ecualizador:** pulsa el botón de ecualizador de la barra del reproductor, actívalo, aplica un preset y arrastra los puntos de la curva mientras suena una canción. El cambio debe oírse. Prueba también **Estéreo / Mono**: el sonido debe pasar a un único canal y volver a estéreo.
 6. **Tema:** alterna entre claro y oscuro con el botón de la barra superior y revisa que ambos se vean bien.
 ## Compilar el programa
  
