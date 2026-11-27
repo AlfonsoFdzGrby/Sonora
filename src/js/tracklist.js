@@ -9,6 +9,12 @@ import { enableDrag } from './dragdrop.js';
 const ROW_HEIGHT = 56;
 const OVERSCAN = 8;
 
+let activeList = null;
+
+export function clearTrackSelection() {
+  activeList?.clearSelection();
+}
+
 export function trackList({ tracks, scroller, columns = {}, playlist = null, sortable = false, onSort = null }) {
   const root = document.createElement('div');
   root.className = 'tracklist';
@@ -97,7 +103,9 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
       row.classList.toggle('selected', on);
       row.querySelector('[data-select]')?.setAttribute('aria-pressed', String(on));
     });
-    selectionBar.classList.toggle('show', selected.size > 0);
+    const active = selected.size > 0;
+    selectionBar.classList.toggle('show', active);
+    document.body.style.setProperty('--toast-offset', active ? `${selectionBar.offsetHeight + 8}px` : '0px');
     selectionBar.querySelector('.sb-count').textContent = `${selected.size} ${plural(selected.size, 'canción', 'canciones')}`;
   }
 
@@ -133,6 +141,14 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     paintSelection();
   }
 
+  const finishAction = (action) => async () => {
+    try {
+      await action();
+    } finally {
+      clearSelection();
+    }
+  };
+
   selectionBar.addEventListener('click', (event) => {
     const chosen = selectionTracks();
     if (!chosen.length) return;
@@ -147,7 +163,7 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     const toPlaylist = event.target.closest('[data-bar-pl]');
     if (toPlaylist) {
       const rect = toPlaylist.getBoundingClientRect();
-      showAddToPlaylist(rect.left, rect.top - 8, chosen.map((track) => track.path));
+      showAddToPlaylist(rect.left, rect.top - 8, chosen.map((track) => track.path), clearSelection);
     }
     if (event.target.closest('[data-bar-clear]')) clearSelection();
   });
@@ -186,9 +202,13 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     if (chosen.length) {
       showMenu(x, y, [
         { header: `${plural(chosen.length, 'canción', 'canciones')} seleccionadas` },
-        { label: 'Reproducir', icon: 'play', onSelect: () => playList(chosen, 0) },
-        { label: 'Agregar a la fila', icon: 'plus', onSelect: () => enqueueTracks(chosen) },
-        { label: 'Agregar a playlist…', icon: 'plus', onSelect: () => showAddToPlaylist(x, y, chosen.map((track) => track.path)) },
+        { label: 'Reproducir', icon: 'play', onSelect: finishAction(() => playList(chosen, 0)) },
+        { label: 'Agregar a la fila', icon: 'plus', onSelect: finishAction(() => enqueueTracks(chosen)) },
+        {
+          label: 'Agregar a playlist…',
+          icon: 'plus',
+          onSelect: () => showAddToPlaylist(x, y, chosen.map((track) => track.path), clearSelection),
+        },
         { separator: true },
         { label: 'Cancelar selección', icon: 'x', onSelect: clearSelection },
       ]);
@@ -197,7 +217,9 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     const track = tracks[index];
     if (!track || track.missing) {
       if (playlist && track) {
-        showMenu(x, y, [{ label: 'Quitar de la playlist', icon: 'trash', danger: true, onSelect: () => removeTrackAt(playlist, index) }]);
+        showMenu(x, y, [
+          { label: 'Quitar de la playlist', icon: 'trash', danger: true, onSelect: finishAction(() => removeTrackAt(playlist, index)) },
+        ]);
       }
       return;
     }
@@ -208,14 +230,23 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
         onSelect: () => toggleSelect(index),
       },
       { separator: true },
-      { label: 'Reproducir', icon: 'play', onSelect: () => playList(tracks, index) },
-      { label: 'Reproducir a continuación', icon: 'queue', onSelect: () => playNextTracks([track]) },
-      { label: 'Agregar a la fila', icon: 'plus', onSelect: () => enqueueTracks([track]) },
-      { label: 'Agregar a playlist…', icon: 'plus', onSelect: () => showAddToPlaylist(x, y, [track.path]) },
+      { label: 'Reproducir', icon: 'play', onSelect: finishAction(() => playList(tracks, index)) },
+      { label: 'Reproducir a continuación', icon: 'queue', onSelect: finishAction(() => playNextTracks([track])) },
+      { label: 'Agregar a la fila', icon: 'plus', onSelect: finishAction(() => enqueueTracks([track])) },
+      {
+        label: 'Agregar a playlist…',
+        icon: 'plus',
+        onSelect: () => showAddToPlaylist(x, y, [track.path], clearSelection),
+      },
     ];
     if (playlist) {
       items.push({ separator: true });
-      items.push({ label: 'Quitar de la playlist', icon: 'trash', danger: true, onSelect: () => removeTrackAt(playlist, index) });
+      items.push({
+        label: 'Quitar de la playlist',
+        icon: 'trash',
+        danger: true,
+        onSelect: finishAction(() => removeTrackAt(playlist, index)),
+      });
     }
     showMenu(x, y, items);
   }
@@ -269,6 +300,10 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
       rangeSelect(index);
       return;
     }
+    if (root.classList.contains('selecting')) {
+      toggleSelect(index);
+      return;
+    }
     clearSelection();
     if (!tracks[index].missing) playList(tracks, index);
   });
@@ -309,12 +344,15 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
   };
   document.addEventListener('keydown', onKey);
 
+  activeList = { clearSelection };
   render(true);
 
   return {
     el: root,
     destroy() {
+      if (activeList?.clearSelection === clearSelection) activeList = null;
       document.removeEventListener('keydown', onKey);
+      document.body.style.removeProperty('--toast-offset');
       selectionBar.remove();
       scroller.removeEventListener('scroll', onScroll);
       resizeObserver.disconnect();

@@ -171,13 +171,28 @@ export function playNextTracks(tracks) {
   toast(added === 1 ? 'Se reproducirá a continuación' : `${added} canciones se reproducirán a continuación`, 'success');
 }
 
-export function showAddToPlaylist(x, y, paths) {
+export function showAddToPlaylist(x, y, paths, onDone = null) {
+  const finish = async (action) => {
+    try {
+      await action();
+    } finally {
+      onDone?.();
+    }
+  };
   const items = [{ header: 'Agregar a playlist' }];
   for (const playlist of state.playlists) {
-    items.push({ label: playlist.name, icon: 'list', onSelect: () => addTracksTo(playlist.name, paths) });
+    items.push({
+      label: playlist.name,
+      icon: 'list',
+      onSelect: () => finish(() => addTracksTo(playlist.name, paths)),
+    });
   }
   if (state.playlists.length) items.push({ separator: true });
-  items.push({ label: 'Nueva playlist…', icon: 'plus', onSelect: () => promptNewPlaylist(paths) });
+  items.push({
+    label: 'Nueva playlist…',
+    icon: 'plus',
+    onSelect: () => finish(() => promptNewPlaylist(paths)),
+  });
   showMenu(x, y, items);
 }
 
