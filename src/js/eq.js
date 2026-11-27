@@ -45,8 +45,13 @@ let audioEl = null;
 let ctx = null;
 let source = null;
 let nodes = [];
+let tail = null;
+let splitter = null;
+let monoMix = null;
+let monoRouted = null;
 let available = true;
 let enabled = storage.get('eqEnabled', false) === true;
+let mono = storage.get('eqMono', false) === true;
 let bands = normalizeBands(storage.get('eqBands', null));
 let presets = (Array.isArray(storage.get('eqPresets', [])) ? storage.get('eqPresets', []) : [])
   .filter((preset) => preset && typeof preset.name === 'string')
@@ -55,17 +60,29 @@ let activePreset = storage.get('eqPreset', '') || '';
 
 function save() {
   storage.set('eqEnabled', enabled);
+  storage.set('eqMono', mono);
   storage.set('eqBands', bands);
   storage.set('eqPresets', presets);
   storage.set('eqPreset', activePreset);
+}
+
+function routeAudio() {
+  if (!ctx || !tail || !splitter || monoRouted === mono) return;
+  if (monoRouted !== null) {
+    if (monoRouted) tail.disconnect(splitter);
+    else tail.disconnect(ctx.destination);
+  }
+  if (mono) tail.connect(splitter);
+  else tail.connect(ctx.destination);
+  monoRouted = mono;
 }
 
 function resume() {
   if (ctx?.state === 'suspended') ctx.resume().catch(() => {});
 }
 
-// El audio NO se desvía hacia Web Audio hasta que el ecualizador se activa.
-// Así, si no se usa (o el WebView no lo admite), la reproducción sigue normal.
+// El audio NO se desvía hacia Web Audio hasta que se activa el ecualizador o
+// la conversión a mono. Así, si no se usan, la reproducción sigue normal.
 function ensureContext() {
   if (ctx || !audioEl || !available) return !!ctx;
   try {
@@ -83,7 +100,20 @@ function ensureContext() {
       last = node;
       return node;
     });
-    last.connect(ctx.destination);
+    tail = last;
+
+    // La mezcla a mono suma ambos canales en una sola señal. Al enviarla a un
+    // nodo de un canal, el destino la reproduce por igual en los dos altavoces.
+    splitter = ctx.createChannelSplitter(2);
+    monoMix = ctx.createGain();
+    monoMix.channelCount = 1;
+    monoMix.channelCountMode = 'explicit';
+    monoMix.gain.value = 0.5;
+    splitter.connect(monoMix, 0);
+    splitter.connect(monoMix, 1);
+    monoMix.connect(ctx.destination);
+    routeAudio();
+
     document.addEventListener('pointerdown', resume);
     document.addEventListener('keydown', resume);
     audioEl.addEventListener('play', resume);
@@ -94,13 +124,17 @@ function ensureContext() {
     ctx = null;
     source = null;
     nodes = [];
+    tail = null;
+    splitter = null;
+    monoMix = null;
+    monoRouted = null;
     return false;
   }
 }
 
 function apply() {
   save();
-  if (enabled) ensureContext();
+  if (enabled || mono) ensureContext();
   if (ctx && nodes.length === BANDS.length) {
     const now = ctx.currentTime;
     BANDS.forEach((band, index) => {
@@ -110,6 +144,7 @@ function apply() {
       node.Q.setTargetAtTime(value.q, now, 0.01);
       node.gain.setTargetAtTime(enabled ? value.gain : 0, now, 0.01);
     });
+    routeAudio();
     resume();
   }
   emit('eq');
@@ -122,7 +157,7 @@ export function initEq(audio) {
 
 // Se llama al abrir el modal, dentro de un gesto del usuario.
 export function prepare() {
-  if (enabled) {
+  if (enabled || mono) {
     ensureContext();
     apply();
   }
@@ -132,6 +167,7 @@ export function prepare() {
 export const supported = () => !!(window.AudioContext || window.webkitAudioContext);
 export const isAvailable = () => available;
 export const isEnabled = () => enabled;
+export const isMono = () => mono;
 export const getBands = () => bands.map((band) => ({ ...band }));
 export const userPresets = () => presets.map((preset) => ({ ...preset }));
 export const activePresetName = () => activePreset;
@@ -162,6 +198,11 @@ export function findPreset(key) {
 
 export function setEnabled(value) {
   enabled = value === true;
+  apply();
+}
+
+export function setMono(value) {
+  mono = value === true;
   apply();
 }
 

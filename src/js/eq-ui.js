@@ -175,6 +175,20 @@ export function openEqualizer() {
       </div>
     </section>
 
+    <section class="eq-card eq-mode-card">
+      <div class="eq-mode-head">
+        <div class="eq-mode-title">
+          <strong>Canales de audio</strong>
+          <span>Mezcla la señal estéreo en un solo canal</span>
+        </div>
+        <output class="eq-q-value" data-mode-value></output>
+      </div>
+      <div class="eq-mode-row" role="group" aria-label="Canales de audio">
+        <button class="eq-chip" data-channel="stereo" aria-pressed="true">Estéreo</button>
+        <button class="eq-chip" data-channel="mono" aria-pressed="false">Mono</button>
+      </div>
+    </section>
+
     <div class="eq-bands">${bandCardsMarkup}</div>
 
     <section class="eq-presets">
@@ -199,6 +213,11 @@ export function openEqualizer() {
   const status = $('[data-status]', body);
   const qSlider = $('#eq-global-q', body);
   const qValue = $('[data-global-qvalue]', body);
+  const modeValue = $('[data-mode-value]', body);
+  const channelButtons = {
+    stereo: $('[data-channel="stereo"]', body),
+    mono: $('[data-channel="mono"]', body),
+  };
   const userChips = $('[data-user-chips]', body);
   const nodes = new Map(eq.BANDS.map((band) => [band.id, $(`.eq-node[data-band="${band.id}"]`, body)]));
   const cards = new Map(eq.BANDS.map((band) => [band.id, $(`.eq-band[data-card="${band.id}"]`, body)]));
@@ -286,6 +305,14 @@ export function openEqualizer() {
     qValue.textContent = q.toFixed(1);
     if (document.activeElement !== qSlider) qSlider.value = q;
     qSlider.style.setProperty('--fill', `${((q - 0.1) / 9.9) * 100}%`);
+
+    const mono = eq.isMono();
+    modeValue.textContent = mono ? 'Mono' : 'Estéreo';
+    for (const [channel, button] of Object.entries(channelButtons)) {
+      const active = channel === 'mono' ? mono : !mono;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    }
 
     const on = eq.isEnabled();
     toggle.checked = on;
@@ -391,6 +418,16 @@ export function openEqualizer() {
     }
   });
   body.addEventListener('click', async (event) => {
+    const channel = event.target.closest('[data-channel]');
+    if (channel) {
+      const toMono = channel.dataset.channel === 'mono';
+      if (toMono !== eq.isMono()) {
+        eq.setMono(toMono);
+        paint();
+        alertEq(toMono ? 'Audio mezclado a mono' : 'Audio en estéreo', 'success');
+      }
+      return;
+    }
     const chip = event.target.closest('[data-preset]');
     if (chip) {
       const preset = eq.findPreset(chip.dataset.preset);

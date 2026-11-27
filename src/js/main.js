@@ -154,16 +154,14 @@ document.addEventListener('keydown', (event) => {
       else if (document.activeElement?.type !== 'range') seek(Math.max((document.getElementById('audio').currentTime || 0) - 5, 0));
       break;
     case 'ArrowUp':
-      if (meta) {
-        event.preventDefault();
-        setVolume(player.volume + 0.05);
-      }
+      if (document.activeElement?.type === 'range') return;
+      event.preventDefault();
+      setVolume(player.volume + 0.05);
       break;
     case 'ArrowDown':
-      if (meta) {
-        event.preventDefault();
-        setVolume(player.volume - 0.05);
-      }
+      if (document.activeElement?.type === 'range') return;
+      event.preventDefault();
+      setVolume(player.volume - 0.05);
       break;
     case 'm':
     case 'M':
