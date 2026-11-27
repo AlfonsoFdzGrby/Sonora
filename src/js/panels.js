@@ -1,6 +1,6 @@
 import { player, togglePlay, next, prev, seek, setVolume, toggleMute, toggleShuffle, cycleRepeat } from './player.js';
 import { state, navigate, artistKeyFor } from './store.js';
-import { showPlaylistMenu, promptNewPlaylist, showAddToPlaylist, insertTracks, enqueueTracks } from './actions.js';
+import { showPlaylistMenu, showNewPlaylistMenu, showAddToPlaylist, insertTracks, enqueueTracks } from './actions.js';
 import { $, $$, esc, fmtTime, on, plural, storage } from './util.js';
 import { icon, coverHtml, bindCoverFallback } from './visual.js';
 import { queueList } from './queue.js';
@@ -320,8 +320,10 @@ export function initSidebar() {
     if (nav) navigate(nav.dataset.nav);
     const pl = event.target.closest('[data-playlist]');
     if (pl) navigate('playlist', pl.dataset.playlist);
-    if (event.target.closest('[data-act="new-playlist"]')) {
-      promptNewPlaylist().then((playlist) => playlist && navigate('playlist', playlist.name));
+    const newPlaylist = event.target.closest('[data-act="new-playlist"]');
+    if (newPlaylist) {
+      const rect = newPlaylist.getBoundingClientRect();
+      showNewPlaylistMenu(rect.left, rect.bottom + 6);
     }
   });
 

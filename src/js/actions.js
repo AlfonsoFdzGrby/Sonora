@@ -67,6 +67,18 @@ export async function importM3U() {
   }
 }
 
+export function showNewPlaylistMenu(x, y) {
+  showMenu(x, y, [
+    { header: 'Playlists' },
+    {
+      label: 'Nueva playlist…',
+      icon: 'plus',
+      onSelect: () => promptNewPlaylist().then((playlist) => playlist && navigate('playlist', playlist.name)),
+    },
+    { label: 'Importar .m3u…', icon: 'upload', onSelect: importM3U },
+  ]);
+}
+
 export async function promptNewPlaylist(paths = []) {
   const name = await askText({
     title: 'Nueva playlist',
@@ -209,9 +221,9 @@ export function openSettings() {
       <div class="modal-actions split">
         <span class="scan-info">${esc(summary)}</span>
         <div class="btn-row">
-          <button class="btn" data-import>${icon('upload', 16)}Importar .m3u</button>
-          <button class="btn" data-rescan ${scanning ? 'disabled' : ''}>${icon('refresh', 16)}Volver a escanear</button>
           <button class="btn primary" data-add ${scanning ? 'disabled' : ''}>${icon('plus', 16)}Agregar carpeta</button>
+          <button class="btn" data-rescan ${scanning ? 'disabled' : ''}>${icon('refresh', 16)}Volver a escanear</button>
+          <button class="btn" data-import>${icon('upload', 16)}Importar .m3u</button>
         </div>
       </div>
       <p class="hint small">Un .m3u externo se adapta a las canciones de tu biblioteca: se buscan por ruta y nombre de archivo.</p>
