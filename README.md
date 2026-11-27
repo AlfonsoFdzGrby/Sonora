@@ -9,6 +9,7 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 - Vistas: canciones (lista virtualizada, filtro instantáneo y ordenación), álbumes, artistas y búsqueda sin distinguir mayúsculas ni acentos.
 - Fila de reproducción: salta a cualquier canción, quita canciones, límpiala, guárdala como playlist y reordénala arrastrando las canciones. Funciona en la página **Fila** y en el panel lateral.
 - Arrastrar a la fila: arrastra canciones (desde cualquier lista) o álbumes y artistas (desde sus tarjetas) hasta la pestaña **Fila** del panel derecho. Una línea marca dónde se insertarán; el panel se desplaza solo al acercarte a sus bordes y `Esc` cancela. Si el panel está en **Detalles** no acepta canciones (el cursor muestra "no permitido"); si no hay nada sonando, se agregan y empiezan a sonar.
+- Selección múltiple: en cualquier lista de canciones, pulsa `Ctrl`/`Cmd`+clic para marcar canciones, `Mayús`+clic para un intervalo, el casillero de la cabecera para seleccionarlas todas o **Seleccionar** en el menú `⋯` de una canción. La barra flotante permite reproducirlas, agregarlas a la fila o a una playlist (y permanece visible al abrir este último menú); también puedes arrastrar la selección hasta la pestaña **Fila**.
 - Scroll por página: al navegar (barra lateral, álbumes, artistas, atrás/adelante, búsqueda) cada página recupera el punto exacto donde la dejaste.
 - Aleatorio: reordena de verdad la fila y la restaura al desactivarlo.
 - Playlists M3U: crea, renombra, elimina, agrega y quita canciones, e importa archivos `.m3u` y `.m3u8`. Cada playlist es un archivo real. Las páginas de álbum y artista tienen un botón **A playlist** para agregar todo su contenido.
@@ -25,6 +26,8 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 | `Alt+←` `Alt+→` | Atrás / adelante entre vistas |
 | `M` | Silenciar |
 | `Ctrl+F` | Buscar |
+| `Ctrl+A` | Seleccionar todas las canciones de la lista |
+| `Esc` | Cancelar la selección de canciones |
  
 La barra de volumen también responde a la rueda del ratón, y los botones laterales del ratón navegan entre vistas.
  

@@ -2,7 +2,7 @@ import { player, playList } from './player.js';
 import { showAddToPlaylist, removeTrackAt, enqueueTracks, playNextTracks } from './actions.js';
 import { showMenu } from './overlays.js';
 import { state } from './store.js';
-import { esc, fmtTime, on } from './util.js';
+import { esc, fmtTime, on, plural } from './util.js';
 import { icon, coverHtml, bindCoverFallback } from './visual.js';
 import { enableDrag } from './dragdrop.js';
 
@@ -28,7 +28,7 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
 
   root.innerHTML = `
     <div class="tl-head">
-      <span class="c-num">${showIndex ? '#' : ''}</span>
+      <span class="c-num">${showIndex ? '<span class="th-num">#</span>' : ''}<button class="icon-btn sm tl-pick" data-select-all title="Seleccionar todas" aria-label="Seleccionar todas">${icon('square', 16)}</button></span>
       ${sortHeader('title', 'Título')}
       ${showAlbum ? sortHeader('album', 'Álbum') : ''}
       ${sortHeader('duration', icon('clock', 14))}
@@ -43,15 +43,20 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
   let first = -1;
   let last = -1;
 
+  const selected = new Set();
+  const selectable = tracks.map((track, index) => (track.missing ? -1 : index)).filter((index) => index >= 0);
+  let anchor = -1;
+
   function rowHtml(track, index) {
     const current = player.current && player.current.path === track.path;
     const classes = ['row'];
     if (current) classes.push('current');
     if (current && player.playing) classes.push('playing');
     if (track.missing) classes.push('missing');
+    const check = `<button class="row-check" data-select${track.missing ? ' disabled' : ''} title="Seleccionar canción" aria-pressed="false">${icon('check', 13)}</button>`;
     const lead = showIndex
-      ? `<span class="c-num"><span class="num">${index + 1}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="pl">${icon('play', 14)}</span></span>`
-      : `<span class="c-num"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="pl">${icon('play', 14)}</span></span>`;
+      ? `<span class="c-num"><span class="num">${index + 1}</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="pl">${icon('play', 14)}</span>${check}</span>`
+      : `<span class="c-num"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="pl">${icon('play', 14)}</span>${check}</span>`;
     const art = showCover ? coverHtml(track.coverUrl, track.albumName || track.title, 'sm', 16) : '';
     const sub = showArtist ? esc(track.artistName) : '';
     return `
@@ -63,6 +68,89 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
         <span class="c-act"><button class="icon-btn sm" data-more title="Más opciones">${icon('more', 18)}</button></span>
       </div>`;
   }
+
+  const selectionBar = document.createElement('div');
+  selectionBar.className = 'selection-bar';
+  selectionBar.setAttribute('role', 'toolbar');
+  selectionBar.innerHTML = `
+    <span class="sb-count"></span>
+    <button class="btn sm" data-bar-play>${icon('play', 15)}Reproducir</button>
+    <button class="btn sm" data-bar-queue>${icon('queue', 15)}A la fila</button>
+    <button class="btn sm primary" data-bar-pl>${icon('plus', 15)}A playlist…</button>
+    <button class="icon-btn sm" data-bar-clear title="Cancelar selección">${icon('x', 16)}</button>`;
+  document.body.append(selectionBar);
+
+  const selectionTracks = () => [...selected]
+    .sort((a, b) => a - b)
+    .map((index) => tracks[index])
+    .filter((track) => track && !track.missing);
+
+  function paintSelection() {
+    const all = selectable.length > 0 && selectable.every((index) => selected.has(index));
+    const pick = root.querySelector('[data-select-all]');
+    pick.innerHTML = icon(all ? 'check-square' : 'square', 16);
+    pick.title = all ? 'Quitar selección' : 'Seleccionar todas';
+    pick.setAttribute('aria-label', pick.title);
+    root.classList.toggle('selecting', selected.size > 0);
+    rows.querySelectorAll('.row').forEach((row) => {
+      const on = selected.has(Number(row.dataset.index));
+      row.classList.toggle('selected', on);
+      row.querySelector('[data-select]')?.setAttribute('aria-pressed', String(on));
+    });
+    selectionBar.classList.toggle('show', selected.size > 0);
+    selectionBar.querySelector('.sb-count').textContent = `${selected.size} ${plural(selected.size, 'canción', 'canciones')}`;
+  }
+
+  function toggleSelect(index) {
+    if (index < 0 || tracks[index]?.missing) return;
+    if (selected.has(index)) selected.delete(index);
+    else selected.add(index);
+    anchor = index;
+    paintSelection();
+  }
+
+  function rangeSelect(index) {
+    if (index < 0 || tracks[index]?.missing) return;
+    if (anchor < 0) anchor = index;
+    const from = Math.min(anchor, index);
+    const to = Math.max(anchor, index);
+    for (let i = from; i <= to; i++) if (!tracks[i].missing) selected.add(i);
+    paintSelection();
+  }
+
+  function toggleAll() {
+    const all = selectable.length > 0 && selectable.every((index) => selected.has(index));
+    selected.clear();
+    if (!all) selectable.forEach((index) => selected.add(index));
+    anchor = -1;
+    paintSelection();
+  }
+
+  function clearSelection() {
+    if (!selected.size) return;
+    selected.clear();
+    anchor = -1;
+    paintSelection();
+  }
+
+  selectionBar.addEventListener('click', (event) => {
+    const chosen = selectionTracks();
+    if (!chosen.length) return;
+    if (event.target.closest('[data-bar-play]')) {
+      clearSelection();
+      playList(chosen, 0);
+    }
+    if (event.target.closest('[data-bar-queue]')) {
+      clearSelection();
+      enqueueTracks(chosen);
+    }
+    const toPlaylist = event.target.closest('[data-bar-pl]');
+    if (toPlaylist) {
+      const rect = toPlaylist.getBoundingClientRect();
+      showAddToPlaylist(rect.left, rect.top - 8, chosen.map((track) => track.path));
+    }
+    if (event.target.closest('[data-bar-clear]')) clearSelection();
+  });
 
   function render(force = false) {
     const top = Math.max(0, scroller.scrollTop - root.offsetTop);
@@ -76,6 +164,7 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     for (let i = from; i <= to; i++) html += rowHtml(tracks[i], i);
     rows.innerHTML = html;
     bindCoverFallback(rows);
+    paintSelection();
   }
 
   function paintCurrent() {
@@ -93,6 +182,18 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
   };
 
   function openMenu(x, y, index) {
+    const chosen = selected.has(index) && selected.size > 1 ? selectionTracks() : [];
+    if (chosen.length) {
+      showMenu(x, y, [
+        { header: `${plural(chosen.length, 'canción', 'canciones')} seleccionadas` },
+        { label: 'Reproducir', icon: 'play', onSelect: () => playList(chosen, 0) },
+        { label: 'Agregar a la fila', icon: 'plus', onSelect: () => enqueueTracks(chosen) },
+        { label: 'Agregar a playlist…', icon: 'plus', onSelect: () => showAddToPlaylist(x, y, chosen.map((track) => track.path)) },
+        { separator: true },
+        { label: 'Cancelar selección', icon: 'x', onSelect: clearSelection },
+      ]);
+      return;
+    }
     const track = tracks[index];
     if (!track || track.missing) {
       if (playlist && track) {
@@ -101,6 +202,12 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
       return;
     }
     const items = [
+      {
+        label: selected.has(index) ? 'Deseleccionar' : 'Seleccionar',
+        icon: 'check-square',
+        onSelect: () => toggleSelect(index),
+      },
+      { separator: true },
       { label: 'Reproducir', icon: 'play', onSelect: () => playList(tracks, index) },
       { label: 'Reproducir a continuación', icon: 'queue', onSelect: () => playNextTracks([track]) },
       { label: 'Agregar a la fila', icon: 'plus', onSelect: () => enqueueTracks([track]) },
@@ -117,13 +224,14 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     const row = target.closest('.row');
     const track = row ? tracks[Number(row.dataset.index)] : null;
     if (!track || track.missing) return null;
+    const dragging = selected.has(Number(row.dataset.index)) && selected.size > 1 ? selectionTracks() : [track];
     return {
-      tracks: [track],
+      tracks: dragging,
       mark: row,
       label: {
-        title: track.title,
-        subtitle: track.artistName,
-        meta: fmtTime(track.durationMs / 1000),
+        title: dragging.length > 1 ? `${plural(dragging.length, 'canción', 'canciones')} seleccionadas` : track.title,
+        subtitle: dragging.length > 1 ? 'Arrastrando selección' : track.artistName,
+        meta: dragging.length > 1 ? '' : fmtTime(track.durationMs / 1000),
         coverUrl: track.coverUrl,
         seed: track.albumName || track.title,
       },
@@ -136,6 +244,16 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
       onSort(sort.dataset.sort);
       return;
     }
+    if (event.target.closest('[data-select-all]')) {
+      toggleAll();
+      return;
+    }
+    const check = event.target.closest('[data-select]');
+    if (check) {
+      const row = check.closest('.row');
+      if (row) toggleSelect(Number(row.dataset.index));
+      return;
+    }
     const index = indexOfEvent(event);
     if (index < 0) return;
     if (event.target.closest('[data-more]')) {
@@ -143,6 +261,15 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
       openMenu(rect.left - 160, rect.bottom + 4, index);
       return;
     }
+    if (event.ctrlKey || event.metaKey) {
+      toggleSelect(index);
+      return;
+    }
+    if (event.shiftKey) {
+      rangeSelect(index);
+      return;
+    }
+    clearSelection();
     if (!tracks[index].missing) playList(tracks, index);
   });
 
@@ -166,11 +293,29 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
   resizeObserver.observe(scroller);
   const offs = [on('track', paintCurrent), on('playstate', paintCurrent)];
 
+  const onKey = (event) => {
+    if (!selected.size && !(event.ctrlKey || event.metaKey) && event.key.toLowerCase() !== 'a') return;
+    const active = document.activeElement;
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+    if (document.querySelector('.overlay')) return;
+    if (event.key === 'Escape') {
+      clearSelection();
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
+      event.preventDefault();
+      toggleAll();
+    }
+  };
+  document.addEventListener('keydown', onKey);
+
   render(true);
 
   return {
     el: root,
     destroy() {
+      document.removeEventListener('keydown', onKey);
+      selectionBar.remove();
       scroller.removeEventListener('scroll', onScroll);
       resizeObserver.disconnect();
       offs.forEach((off) => off());
