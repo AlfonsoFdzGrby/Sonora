@@ -16,13 +16,35 @@ const scroller = $('#view');
 const searchInput = $('#search');
 let current = null;
 
+const scrollMemory = new Map();
+const SCROLL_MEMORY_LIMIT = 60;
+let currentKey = null;
+
+function viewKey() {
+  const query = store.state.query.trim();
+  return query ? `search:${query}` : `${store.state.nav.name}:${store.state.nav.param ?? ''}`;
+}
+
+function rememberScroll() {
+  if (currentKey === null) return;
+  const top = scroller.scrollTop;
+  scrollMemory.delete(currentKey);
+  if (top <= 0) return;
+  scrollMemory.set(currentKey, top);
+  if (scrollMemory.size > SCROLL_MEMORY_LIMIT) scrollMemory.delete(scrollMemory.keys().next().value);
+}
+
 function renderView() {
+  rememberScroll();
   current?.destroy?.();
   scroller.innerHTML = '';
+  currentKey = viewKey();
+  const saved = scrollMemory.get(currentKey) ?? 0;
   scroller.scrollTop = 0;
   current = buildView(scroller);
   scroller.append(current.el);
-  current.mounted?.();
+  if (saved) scroller.scrollTop = saved;
+  current.mounted?.({ restored: saved > 0 });
   $('#back').disabled = !store.state.back.length && !store.state.query;
   searchInput.value = store.state.query;
 }

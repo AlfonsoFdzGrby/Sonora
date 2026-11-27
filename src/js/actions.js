@@ -1,5 +1,5 @@
 import * as api from './api.js';
-import { playNext, enqueue } from './player.js';
+import { playNext, enqueue, insertAt } from './player.js';
 import {
   state,
   scan,
@@ -143,6 +143,12 @@ export async function removeTrackAt(name, index) {
 
 export function enqueueTracks(tracks) {
   const { added, started } = enqueue(tracks);
+  if (started || !added) return;
+  toast(added === 1 ? 'Agregada a la fila' : `${added} canciones agregadas a la fila`, 'success');
+}
+
+export function insertTracks(tracks, index) {
+  const { added, started } = insertAt(tracks, index);
   if (started || !added) return;
   toast(added === 1 ? 'Agregada a la fila' : `${added} canciones agregadas a la fila`, 'success');
 }

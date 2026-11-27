@@ -5,6 +5,7 @@ import { state, navigate, search, sortTracks, resolvePlaylist, artistKeyFor } fr
 import { chooseDirectory, promptRename, promptDelete, promptNewPlaylist, enqueueTracks, showAddToPlaylist } from './actions.js';
 import { $, esc, fmtTotal, norm, plural, debounce, on } from './util.js';
 import { icon, coverHtml, bindCoverFallback } from './visual.js';
+import { enableDrag } from './dragdrop.js';
 
 const html = (markup) => {
   const el = document.createElement('div');
@@ -60,6 +61,27 @@ function bindPlay(el, tracks) {
   $('[data-play]', el)?.addEventListener('click', () => playList(tracks, 0));
   $('[data-shuffle]', el)?.addEventListener('click', () => shuffleList(tracks));
   $('[data-enqueue]', el)?.addEventListener('click', () => enqueueTracks(tracks));
+}
+
+function pickCard(target) {
+  const card = target.closest('.card');
+  if (!card) return null;
+  const album = card.dataset.album ? state.albumsByKey.get(card.dataset.album) : null;
+  const artist = card.dataset.artist ? state.artistsByKey.get(card.dataset.artist) : null;
+  const source = album ?? artist;
+  if (!source) return null;
+  const name = album ? album.title : artist.name;
+  return {
+    tracks: source.tracks,
+    mark: card,
+    label: {
+      title: name,
+      subtitle: plural(source.tracks.length, 'canción', 'canciones'),
+      meta: fmtTotal(source.durationMs),
+      coverUrl: source.coverUrl,
+      seed: name,
+    },
+  };
 }
 
 function songsView(scroller) {
@@ -138,6 +160,7 @@ function albumsView() {
     ${pageHead({ kicker: 'Biblioteca', title: 'Álbumes', meta: plural(state.albums.length, 'álbum', 'álbumes') })}
     <div class="grid">${state.albums.map(albumCard).join('')}</div>`);
   bindCoverFallback(el);
+  enableDrag(el, pickCard);
   el.addEventListener('click', (event) => {
     const card = event.target.closest('[data-album]');
     if (card) navigate('album', card.dataset.album);
@@ -161,6 +184,7 @@ function artistsView() {
     ${pageHead({ kicker: 'Biblioteca', title: 'Artistas', meta: plural(state.artists.length, 'artista', 'artistas') })}
     <div class="grid">${cards}</div>`);
   bindCoverFallback(el);
+  enableDrag(el, pickCard);
   el.addEventListener('click', (event) => {
     const card = event.target.closest('[data-artist]');
     if (card) navigate('artist', card.dataset.artist);
@@ -212,6 +236,7 @@ function artistView(scroller, key) {
   bindCoverFallback(el);
   bindPlay(el, artist.tracks);
   bindAddToPlaylist(el, artist.tracks);
+  enableDrag(el, pickCard);
   el.addEventListener('click', (event) => {
     const card = event.target.closest('[data-album]');
     if (card) navigate('album', card.dataset.album);
@@ -279,6 +304,7 @@ function searchView(scroller, query) {
     ${found.tracks.length ? '<h3 class="section">Canciones</h3><div class="list-host"></div>' : ''}`);
   bindCoverFallback(el);
   bindPlay(el, found.tracks);
+  enableDrag(el, pickCard);
   el.addEventListener('click', (event) => {
     const artist = event.target.closest('[data-artist]');
     if (artist) navigate('artist', artist.dataset.artist);
@@ -321,7 +347,9 @@ function queueView(scroller) {
 
   return {
     el,
-    mounted: () => list.reveal(),
+    mounted: ({ restored } = {}) => {
+      if (!restored) list.reveal();
+    },
     destroy() {
       list.destroy();
       offs.forEach((off) => off());

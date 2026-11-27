@@ -175,6 +175,24 @@ export function enqueue(list) {
   return { added: entries.length, started: false };
 }
 
+export function insertAt(list, index) {
+  const tracks = playable(list);
+  if (!tracks.length) return { added: 0, started: false };
+  if (!player.queue.length) {
+    playList(tracks, 0);
+    return { added: tracks.length, started: true };
+  }
+  const at = Math.max(0, Math.min(index, player.queue.length));
+  const entries = tracks.map(wrap);
+  const before = at > 0 ? player.queue[at - 1] : null;
+  const originalAt = before ? player.original.indexOf(before) + 1 : 0;
+  player.queue = [...player.queue.slice(0, at), ...entries, ...player.queue.slice(at)];
+  player.original = [...player.original.slice(0, originalAt), ...entries, ...player.original.slice(originalAt)];
+  if (at <= player.pos) player.pos += entries.length;
+  emit('queue');
+  return { added: entries.length, started: false };
+}
+
 export function removeAt(index) {
   if (index === player.pos || index < 0 || index >= player.queue.length) return;
   const entry = player.queue[index];

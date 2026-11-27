@@ -1,9 +1,10 @@
 import { player, togglePlay, next, prev, seek, setVolume, toggleMute, toggleShuffle, cycleRepeat } from './player.js';
 import { state, navigate, artistKeyFor } from './store.js';
-import { showPlaylistMenu, promptNewPlaylist, showAddToPlaylist } from './actions.js';
+import { showPlaylistMenu, promptNewPlaylist, showAddToPlaylist, insertTracks, enqueueTracks } from './actions.js';
 import { $, $$, esc, fmtTime, on, plural, storage } from './util.js';
 import { icon, coverHtml, bindCoverFallback } from './visual.js';
 import { queueList } from './queue.js';
+import { registerDropTarget } from './dragdrop.js';
 import { openEqualizer } from './eq-ui.js';
 
 function fillRange(input) {
@@ -255,6 +256,28 @@ export function initNowPanel() {
       const rect = add.getBoundingClientRect();
       showAddToPlaylist(rect.left, rect.top - 8, [player.current.path]);
     }
+  });
+
+  registerDropTarget({
+    el: root,
+    accepts: () => !player.current || list !== null,
+    over(x, y) {
+      if (list) {
+        root.classList.remove('drop-hint');
+        list.dropOver(y);
+      } else {
+        root.classList.add('drop-hint');
+      }
+    },
+    leave() {
+      root.classList.remove('drop-hint');
+      list?.dropLeave();
+    },
+    drop(x, y, tracks) {
+      const index = list ? list.dropIndex() : -1;
+      if (index >= 0) insertTracks(tracks, index);
+      else enqueueTracks(tracks);
+    },
   });
 
   on('track', draw);

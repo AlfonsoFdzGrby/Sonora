@@ -1072,10 +1072,26 @@ button.th:hover,
   -webkit-user-select: none;
 }
 
-.qlist .row.dragging {
+.qlist .row.dragging,
+.tracklist .row.dragging,
+.card.dragging {
   opacity: 0.35;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.card.dragging {
+  transform: none;
+}
+
+body.reordering .tracklist .row:hover:not(.current):not(.dragging),
+body.reordering .card:hover:not(.dragging) {
+  background: transparent;
+  transform: none;
+}
+
+.now-panel.drop-hint {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .qlist.dragging .row:hover:not(.current):not(.dragging) {
@@ -1131,6 +1147,11 @@ button.th:hover,
 body.reordering,
 body.reordering * {
   cursor: grabbing !important;
+}
+
+body.reordering.drop-refused,
+body.reordering.drop-refused * {
+  cursor: not-allowed !important;
 }
 
 .player {

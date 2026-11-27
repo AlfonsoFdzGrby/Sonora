@@ -8,6 +8,8 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 - Biblioteca: escaneo de una o varias carpetas con sus subcarpetas, etiquetas y portadas incluidas, con caché para abrir rápido.
 - Vistas: canciones (lista virtualizada, filtro instantáneo y ordenación), álbumes, artistas y búsqueda sin distinguir mayúsculas ni acentos.
 - Fila de reproducción: salta a cualquier canción, quita canciones, límpiala, guárdala como playlist y reordénala arrastrando las canciones. Funciona en la página **Fila** y en el panel lateral.
+- Arrastrar a la fila: arrastra canciones (desde cualquier lista) o álbumes y artistas (desde sus tarjetas) hasta la pestaña **Fila** del panel derecho. Una línea marca dónde se insertarán; el panel se desplaza solo al acercarte a sus bordes y `Esc` cancela. Si el panel está en **Detalles** no acepta canciones (el cursor muestra "no permitido"); si no hay nada sonando, se agregan y empiezan a sonar.
+- Scroll por página: al navegar (barra lateral, álbumes, artistas, atrás/adelante, búsqueda) cada página recupera el punto exacto donde la dejaste.
 - Aleatorio: reordena de verdad la fila y la restaura al desactivarlo.
 - Playlists M3U: crea, renombra, elimina, agrega y quita canciones, e importa archivos `.m3u` y `.m3u8`. Cada playlist es un archivo real. Las páginas de álbum y artista tienen un botón **A playlist** para agregar todo su contenido.
 - Ecualizador de 5 bandas con curva interactiva, ancho (Q) de las bandas medias, conversión estéreo/mono, presets incluidos y presets propios.
@@ -117,6 +119,8 @@ Este proyecto no incluye pruebas automáticas. Para verificar que todo funciona,
 4. **Playlists:** abre un álbum o un artista y pulsa **A playlist**. Elige una playlist existente o **Nueva playlist…** y comprueba que las canciones aparecen en ella.
 5. **Ecualizador:** pulsa el botón de ecualizador de la barra del reproductor, actívalo, aplica un preset y arrastra los puntos de la curva mientras suena una canción. El cambio debe oírse. Prueba también **Estéreo / Mono**: el sonido debe pasar a un único canal y volver a estéreo.
 6. **Tema:** alterna entre claro y oscuro con el botón de la barra superior y revisa que ambos se vean bien.
+7. **Arrastrar a la fila:** con una canción sonando, arrastra una fila de la lista de Canciones al panel derecho (pestaña **Fila**): debe aparecer la línea de destino y, al soltar, la canción queda en ese hueco sin interrumpir la reproducción. Repite con una tarjeta de **Álbumes** o **Artistas** (se insertan todas sus canciones) y comprueba que al soltar fuera del panel no ocurre nada ni se abre la página.
+8. **Scroll por página:** baja en Canciones, ve a Álbumes, baja un poco y abre un álbum; al volver con la flecha atrás, o desde la barra lateral, cada página debe quedar donde la dejaste.
 ## Compilar el programa
  
 Tauri compila para el sistema en el que lo ejecutas: el `.exe` se genera en Windows, la app de macOS en un Mac y los paquetes de Linux en Linux. No hay compilación cruzada sencilla.

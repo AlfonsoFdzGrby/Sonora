@@ -30,6 +30,7 @@ export function queueList({ scroller, compact = false }) {
     frame: 0,
   };
   let suppressClick = false;
+  let dropGap = -1;
 
   let first = -1;
   let last = -1;
@@ -82,6 +83,26 @@ export function queueList({ scroller, compact = false }) {
     const lead = compact ? 0 : 2;
     scroller.scrollTop = root.offsetTop + Math.max(0, player.pos - lead) * rowHeight;
     render(true);
+  }
+
+  function dropOver(y) {
+    const bounds = scroller.getBoundingClientRect();
+    const zone = Math.min(56, bounds.height / 4);
+    let speed = 0;
+    if (y >= bounds.top && y < bounds.top + zone) speed = -Math.ceil(((bounds.top + zone - y) / zone) * 18);
+    else if (y <= bounds.bottom && y > bounds.bottom - zone) speed = Math.ceil(((y - (bounds.bottom - zone)) / zone) * 18);
+    if (speed) scroller.scrollTop += speed;
+
+    const clamped = Math.min(Math.max(y, bounds.top), bounds.bottom);
+    const top = root.getBoundingClientRect().top;
+    dropGap = Math.max(0, Math.min(player.queue.length, Math.round((clamped - top) / rowHeight)));
+    indicator.style.display = 'block';
+    indicator.style.top = `${dropGap * rowHeight}px`;
+  }
+
+  function dropLeave() {
+    dropGap = -1;
+    if (!drag.active) indicator.style.display = 'none';
   }
 
   function clearDragUi() {
@@ -254,6 +275,9 @@ export function queueList({ scroller, compact = false }) {
     el: root,
     refresh,
     reveal,
+    dropOver,
+    dropLeave,
+    dropIndex: () => dropGap,
     destroy() {
       stopDrag(false);
       scroller.removeEventListener('scroll', onScroll);

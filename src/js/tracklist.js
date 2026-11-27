@@ -4,6 +4,7 @@ import { showMenu } from './overlays.js';
 import { state } from './store.js';
 import { esc, fmtTime, on } from './util.js';
 import { icon, coverHtml, bindCoverFallback } from './visual.js';
+import { enableDrag } from './dragdrop.js';
 
 const ROW_HEIGHT = 56;
 const OVERSCAN = 8;
@@ -111,6 +112,23 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
     }
     showMenu(x, y, items);
   }
+
+  enableDrag(root, (target) => {
+    const row = target.closest('.row');
+    const track = row ? tracks[Number(row.dataset.index)] : null;
+    if (!track || track.missing) return null;
+    return {
+      tracks: [track],
+      mark: row,
+      label: {
+        title: track.title,
+        subtitle: track.artistName,
+        meta: fmtTime(track.durationMs / 1000),
+        coverUrl: track.coverUrl,
+        seed: track.albumName || track.title,
+      },
+    };
+  });
 
   root.addEventListener('click', (event) => {
     const sort = event.target.closest('[data-sort]');
