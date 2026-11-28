@@ -6,7 +6,7 @@ import { icon, coverHtml, bindCoverFallback } from './visual.js';
 import { queueList } from './queue.js';
 import { registerDropTarget } from './dragdrop.js';
 import { openEqualizer } from './eq-ui.js';
-import { clearTrackSelection } from './tracklist.js';
+import { clearSelectionIfIncludes } from './selection.js';
 
 function fillRange(input) {
   const max = Number(input.max) || 1;
@@ -276,7 +276,7 @@ export function initNowPanel() {
     },
     drop(x, y, tracks) {
       const index = list ? list.dropIndex() : -1;
-      clearTrackSelection();
+      clearSelectionIfIncludes(tracks);
       if (index >= 0) insertTracks(tracks, index);
       else enqueueTracks(tracks);
     },

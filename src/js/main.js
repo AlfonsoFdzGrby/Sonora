@@ -9,6 +9,7 @@ import { $, debounce, on } from './util.js';
 import { mountIcons, icon } from './visual.js';
 import { currentTheme, initTheme, toggleTheme } from './theme.js';
 import { initEq } from './eq.js';
+import { initSelection } from './selection.js';
 
 mountIcons();
 
@@ -214,6 +215,7 @@ initTheme();
 drawTheme();
 initEq(document.getElementById('audio'));
 
+initSelection();
 initSidebar();
 initPlayerBar();
 initNowPanel();
