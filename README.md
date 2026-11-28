@@ -9,7 +9,7 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 - Vistas: canciones (lista virtualizada, filtro instantáneo y ordenación), álbumes, artistas y búsqueda sin distinguir mayúsculas ni acentos.
 - Fila de reproducción: salta a cualquier canción, quita canciones, límpiala, guárdala como playlist y reordénala arrastrando las canciones. Funciona en la página **Fila** y en el panel lateral.
 - Arrastrar a la fila: arrastra canciones (desde cualquier lista) o álbumes y artistas (desde sus tarjetas) hasta la pestaña **Fila** del panel derecho. Una línea marca dónde se insertarán; el panel se desplaza solo al acercarte a sus bordes y `Esc` cancela. Si el panel está en **Detalles** no acepta canciones (el cursor muestra "no permitido"); si no hay nada sonando, se agregan y empiezan a sonar.
-- Selección múltiple: en cualquier lista de canciones, pulsa `Ctrl`/`Cmd`+clic para marcar canciones, `Mayús`+clic para un intervalo, el casillero de la cabecera para seleccionarlas todas o **Seleccionar** en el menú `⋯` de una canción. Con la selección activa, un clic normal en cualquier parte de la fila también la marca o desmarca. La barra flotante permite reproducirlas, agregarlas a la fila o a una playlist: con esta última la barra permanece visible mientras se elige la playlist y se oculta al completar la adición. Las acciones del menú `⋯` limpian la selección al terminar. También puedes arrastrar la selección hasta la pestaña **Fila**, y la selección se limpia al soltarla allí. Las notificaciones se sitúan por encima de la barra mientras esta está visible.
+- Selección múltiple: en cualquier lista de canciones, pulsa `Ctrl`/`Cmd`+clic para marcar canciones, `Mayús`+clic para un intervalo, el casillero de la cabecera para seleccionar todas las que se ven o **Seleccionar** en el menú `⋯` de una canción. Con la selección activa, un clic normal en cualquier parte de la fila también la marca o desmarca. **La selección es global**: se conserva al filtrar o buscar, al cambiar el orden y al moverte entre Canciones, Álbumes, Artistas, Playlists y Búsqueda, así que puedes juntar canciones de distintos menús. La barra flotante (visible en todas las vistas) permite reproducirlas, agregarlas a la fila o a una playlist; la selección se vacía al completar una de esas acciones, con **Cancelar selección** o con `Esc`. Las acciones sobre una sola canción desde el menú `⋯` no tocan la selección. Las canciones se reproducen o encolan en el orden en que fueron seleccionadas. También puedes arrastrar la selección hasta la pestaña **Fila**; se limpia al soltarla allí. Las notificaciones se sitúan por encima de la barra mientras esta está visible.
 - Scroll por página: al navegar (barra lateral, álbumes, artistas, atrás/adelante, búsqueda) cada página recupera el punto exacto donde la dejaste.
 - Aleatorio: reordena de verdad la fila y la restaura al desactivarlo.
 - Playlists M3U: crea, renombra, elimina, agrega y quita canciones, e importa archivos `.m3u` y `.m3u8`. Cada playlist es un archivo real. Las páginas de álbum y artista tienen un botón **A playlist** para agregar todo su contenido.
@@ -26,8 +26,9 @@ Sonora es un reproductor de música local de escritorio, hecho con **Tauri 2** (
 | `Alt+←` `Alt+→` | Atrás / adelante entre vistas |
 | `M` | Silenciar |
 | `Ctrl+F` | Buscar |
-| `Ctrl+A` | Seleccionar todas las canciones de la lista |
+| `Ctrl+A` | Seleccionar (o quitar) todas las canciones que se ven en la lista |
 | `Esc` | Cancelar la selección de canciones |
+| `↑` `↓` `Inicio` `Fin` | Moverse por un menú contextual abierto (`Enter` elige, `Esc` cierra) |
  
 La barra de volumen también responde a la rueda del ratón, y los botones laterales del ratón navegan entre vistas.
  
@@ -97,10 +98,9 @@ Desde la carpeta del proyecto (la que contiene `package.json`):
  
 ```bash
 npm install
-npm install --save-dev @tauri-apps/cli
 ```
  
-Esto instala la CLI de Tauri (`@tauri-apps/cli`). Las dependencias de Rust se descargan solas la primera vez que compilas o ejecutas la aplicación.
+Esto instala la CLI de Tauri (`@tauri-apps/cli`, ya declarada en `package.json`). Las dependencias de Rust se descargan solas la primera vez que compilas o ejecutas la aplicación.
  
 ## Probar la aplicación (modo desarrollo)
  
@@ -124,6 +124,9 @@ Este proyecto no incluye pruebas automáticas. Para verificar que todo funciona,
 6. **Tema:** alterna entre claro y oscuro con el botón de la barra superior y revisa que ambos se vean bien.
 7. **Arrastrar a la fila:** con una canción sonando, arrastra una fila de la lista de Canciones al panel derecho (pestaña **Fila**): debe aparecer la línea de destino y, al soltar, la canción queda en ese hueco sin interrumpir la reproducción. Repite con una tarjeta de **Álbumes** o **Artistas** (se insertan todas sus canciones) y comprueba que al soltar fuera del panel no ocurre nada ni se abre la página.
 8. **Scroll por página:** baja en Canciones, ve a Álbumes, baja un poco y abre un álbum; al volver con la flecha atrás, o desde la barra lateral, cada página debe quedar donde la dejaste.
+9. **Selección entre vistas:** en Canciones marca dos o tres canciones, escribe en «Filtrar canciones» o en la búsqueda superior y comprueba que la barra sigue mostrando el mismo número. Ve a un álbum, marca otra canción y verifica que el contador suma. Reproduce la selección desde la barra y comprueba que se vacía.
+10. **Carpetas durante un escaneo:** con un escaneo en curso, agrega o quita otra carpeta; al terminar debe iniciarse un segundo escaneo con el cambio aplicado.
+11. **Menús con teclado:** abre un menú `⋯`, muévete con `↑`/`↓`, elige con `Enter` y cierra con `Esc`.
 ## Compilar el programa
  
 Tauri compila para el sistema en el que lo ejecutas: el `.exe` se genera en Windows, la app de macOS en un Mac y los paquetes de Linux en Linux. No hay compilación cruzada sencilla.

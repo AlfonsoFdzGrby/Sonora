@@ -2063,6 +2063,10 @@ body.reordering.drop-refused * {
   color: var(--text-2);
 }
 
+.menu:focus {
+  outline: none;
+}
+
 .menu {
   position: fixed;
   z-index: 80;

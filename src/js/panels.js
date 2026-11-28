@@ -19,11 +19,11 @@ export function initPlayerBar() {
     <div class="pb-track" id="pb-track"></div>
     <div class="pb-center">
       <div class="pb-buttons">
-        <button class="icon-btn toggle" id="b-shuffle" title="Aleatorio">${icon('shuffle', 18)}</button>
-        <button class="icon-btn" id="b-prev" title="Anterior">${icon('skip-back', 20)}</button>
-        <button class="play-btn" id="b-play" title="Reproducir / Pausa"></button>
-        <button class="icon-btn" id="b-next" title="Siguiente">${icon('skip-forward', 20)}</button>
-        <button class="icon-btn toggle" id="b-repeat" title="Repetir"></button>
+        <button class="icon-btn toggle" id="b-shuffle" title="Aleatorio" aria-label="Aleatorio">${icon('shuffle', 18)}</button>
+        <button class="icon-btn" id="b-prev" title="Anterior" aria-label="Anterior">${icon('skip-back', 20)}</button>
+        <button class="play-btn" id="b-play" title="Reproducir / Pausa" aria-label="Reproducir / Pausa"></button>
+        <button class="icon-btn" id="b-next" title="Siguiente" aria-label="Siguiente">${icon('skip-forward', 20)}</button>
+        <button class="icon-btn toggle" id="b-repeat" title="Repetir" aria-label="Repetir"></button>
       </div>
       <div class="pb-seek">
         <span class="time" id="t-cur">0:00</span>
@@ -32,10 +32,10 @@ export function initPlayerBar() {
       </div>
     </div>
     <div class="pb-right">
-      <button class="icon-btn" id="b-mute" title="Silenciar"></button>
+      <button class="icon-btn" id="b-mute" title="Silenciar" aria-label="Silenciar"></button>
       <input type="range" class="range vol" id="volume" min="0" max="100" value="80" aria-label="Volumen" title="Volumen (también con la rueda del ratón)">
-      <button class="icon-btn" id="b-eq" title="Ecualizador">${icon('sliders', 18)}</button>
-      <button class="icon-btn toggle" id="b-panel" title="Mostrar u ocultar panel">${icon('panel', 18)}</button>
+      <button class="icon-btn" id="b-eq" title="Ecualizador" aria-label="Ecualizador">${icon('sliders', 18)}</button>
+      <button class="icon-btn toggle" id="b-panel" title="Mostrar u ocultar panel" aria-label="Mostrar u ocultar panel">${icon('panel', 18)}</button>
     </div>`;
 
   const seekInput = $('#seek');
@@ -65,6 +65,9 @@ export function initPlayerBar() {
     repeat.innerHTML = icon(player.repeat === 'one' ? 'repeat-one' : 'repeat', 18);
     repeat.classList.toggle('on', player.repeat !== 'off');
     repeat.title = { off: 'Repetir: desactivado', all: 'Repetir todo', one: 'Repetir canción' }[player.repeat];
+    repeat.setAttribute('aria-label', repeat.title);
+    repeat.setAttribute('aria-pressed', String(player.repeat !== 'off'));
+    $('#b-shuffle').setAttribute('aria-pressed', String(player.shuffle));
     const level = player.muted || player.volume === 0 ? 'volume-x' : player.volume < 0.5 ? 'volume-1' : 'volume-2';
     $('#b-mute').innerHTML = icon(level, 18);
     volume.value = player.muted ? 0 : Math.round(player.volume * 100);

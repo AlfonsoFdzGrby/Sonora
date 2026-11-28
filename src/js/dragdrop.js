@@ -4,7 +4,7 @@ import { coverHtml, bindCoverFallback } from './visual.js';
 const THRESHOLD = 5;
 const GHOST_WIDTH = 300;
 const GHOST_HEIGHT = 52;
-const IGNORED = '[data-more], [data-remove], [data-sort], input, a';
+const IGNORED = '[data-more], [data-remove], [data-sort], [data-select], [data-select-all], input, a';
 
 const targets = new Set();
 

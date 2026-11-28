@@ -124,7 +124,25 @@ function onMenuKey(event) {
   if (event.key === 'Escape') {
     event.stopPropagation();
     closeMenu();
+    return;
   }
+  if (event.key === 'Tab') {
+    closeMenu();
+    return;
+  }
+  if (!activeMenu) return;
+  const items = [...activeMenu.querySelectorAll('.menu-item')];
+  if (!items.length) return;
+  const at = items.indexOf(document.activeElement);
+  let target = null;
+  if (event.key === 'ArrowDown') target = items[(at + 1) % items.length];
+  else if (event.key === 'ArrowUp') target = items[at <= 0 ? items.length - 1 : at - 1];
+  else if (event.key === 'Home') target = items[0];
+  else if (event.key === 'End') target = items[items.length - 1];
+  if (!target) return;
+  event.preventDefault();
+  event.stopPropagation();
+  target.focus();
 }
 
 export function closeMenu() {
@@ -141,6 +159,7 @@ export function showMenu(x, y, items) {
   const menu = document.createElement('div');
   menu.className = 'menu';
   menu.setAttribute('role', 'menu');
+  menu.tabIndex = -1;
 
   for (const item of items) {
     if (item.separator) {
@@ -171,6 +190,7 @@ export function showMenu(x, y, items) {
   menu.style.left = `${Math.max(8, Math.min(x, window.innerWidth - box.width - 8))}px`;
   menu.style.top = `${Math.max(8, Math.min(y, window.innerHeight - box.height - 8))}px`;
   activeMenu = menu;
+  menu.focus({ preventScroll: true });
 
   setTimeout(() => {
     if (activeMenu !== menu) return;

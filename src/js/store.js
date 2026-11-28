@@ -289,16 +289,26 @@ export async function removeFromPlaylist(name, index) {
   replacePlaylist(name, saved);
 }
 
+let rescanQueued = false;
+
 export async function scan() {
-  if (state.scan.active) return;
-  state.scan = { active: true, done: 0, total: 0 };
-  emit('scan');
-  try {
-    setTracks(await api.invoke('scan_library'));
-  } finally {
-    state.scan = { active: false, done: 0, total: 0 };
-    emit('scan');
+  // Si ya hay un escaneo en curso (p. ej. se agregó o quitó una carpeta a
+  // medias), se encola uno más en lugar de descartar el cambio en silencio.
+  if (state.scan.active) {
+    rescanQueued = true;
+    return;
   }
+  do {
+    rescanQueued = false;
+    state.scan = { active: true, done: 0, total: 0 };
+    emit('scan');
+    try {
+      setTracks(await api.invoke('scan_library'));
+    } finally {
+      state.scan = { active: false, done: 0, total: 0 };
+      emit('scan');
+    }
+  } while (rescanQueued);
 }
 
 export async function addDirectory(path) {

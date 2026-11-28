@@ -148,6 +148,7 @@ export function trackList({ tracks, scroller, columns = {}, playlist = null, sor
       showMenu(x, y, [
         { header: `${plural(chosen.length, 'canción', 'canciones')} seleccionadas` },
         { label: 'Reproducir', icon: 'play', onSelect: () => { clearSelection(); playList(chosen, 0); } },
+        { label: 'Reproducir a continuación', icon: 'queue', onSelect: () => { clearSelection(); playNextTracks(chosen); } },
         { label: 'Agregar a la fila', icon: 'plus', onSelect: () => { clearSelection(); enqueueTracks(chosen); } },
         {
           label: 'Agregar a playlist…',
